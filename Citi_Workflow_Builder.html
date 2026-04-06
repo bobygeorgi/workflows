@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citi Content Marketing — Workflow Builder</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1c2333;
+  --border: #30363d;
+  --border-light: #3a434d;
+  --text: #e6edf3;
+  --text-dim: #7d8590;
+  --text-muted: #484f58;
+  --accent: #58a6ff;
+  --green: #3fb950;
+  --green-dim: rgba(63,185,80,0.15);
+  --orange: #d29922;
+  --orange-dim: rgba(210,153,34,0.15);
+  --red: #f85149;
+  --red-dim: rgba(248,81,73,0.15);
+  --purple: #bc8cff;
+  --purple-dim: rgba(188,140,255,0.15);
+  --cyan: #39d2c0;
+  --cyan-dim: rgba(57,210,192,0.15);
+  --blue-dim: rgba(88,166,255,0.15);
+  --yellow: #e3b341;
+  --pink: #f778ba;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+
+/* Top bar */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.topbar h1{font-size:16px;font-weight:600;}
+.topbar h1 span{color:var(--text-dim);font-weight:400;}
+.chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.3px;}
+.chip-blue{background:var(--blue-dim);color:var(--accent);border:1px solid rgba(88,166,255,0.25);}
+.chip-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,0.25);}
+.chip-orange{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(210,153,34,0.25);}
+.chip-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,81,73,0.25);}
+.chip-purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(188,140,255,0.25);}
+
+/* Legend bar */
+.legend-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 28px;display:flex;gap:20px;align-items:center;font-size:11px;color:var(--text-dim);}
+.legend-item{display:flex;align-items:center;gap:6px;}
+.legend-icon{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;}
+
+/* Canvas area */
+.canvas{padding:32px 28px 60px;max-width:1200px;margin:0 auto;position:relative;}
+
+/* Stage card */
+.stage{margin-bottom:0;position:relative;}
+.stage-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color 0.3s,box-shadow 0.3s;cursor:pointer;position:relative;}
+.stage-card:hover{border-color:var(--border-light);box-shadow:0 4px 24px rgba(0,0,0,0.3);}
+.stage-card.expanded{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 8px 32px rgba(88,166,255,0.1);}
+.stage-card.new-stage{border-color:var(--orange);box-shadow:0 0 0 1px rgba(210,153,34,0.3);}
+.stage-card.new-stage.expanded{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange),0 8px 32px rgba(210,153,34,0.15);}
+
+.stage-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.stage-header-left{display:flex;align-items:center;gap:14px;flex:1;min-width:0;}
+.stage-num{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+.stage-info{flex:1;min-width:0;}
+.stage-title{font-size:15px;font-weight:600;margin-bottom:2px;}
+.stage-subtitle{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stage-header-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.stage-meta{display:flex;gap:6px;}
+.expand-icon{width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);transition:transform 0.3s,background 0.2s;}
+.stage-card.expanded .expand-icon{transform:rotate(180deg);background:var(--blue-dim);}
+
+/* Connector line */
+.connector{display:flex;justify-content:center;padding:0;height:40px;position:relative;}
+.connector-line{width:2px;height:100%;background:var(--border);position:relative;}
+.connector-line::after{content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--border);}
+.connector.feedback .connector-line{background:var(--orange);border-style:dashed;}
+.connector.feedback .connector-line::after{border-top-color:var(--orange);}
+
+/* Steps panel */
+.steps-panel{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1);background:var(--bg3);border-top:1px solid var(--border);}
+.stage-card.expanded .steps-panel{max-height:2000px;}
+.steps-inner{padding:20px;}
+
+/* Step row */
+.step{display:flex;align-items:flex-start;gap:14px;padding:12px 14px;margin-bottom:8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid transparent;transition:all 0.2s;position:relative;}
+.step:hover{background:rgba(255,255,255,0.04);border-color:var(--border);}
+.step:last-child{margin-bottom:0;}
+.step-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px;}
+.step-content{flex:1;min-width:0;}
+.step-title{font-size:13px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:8px;}
+.step-desc{font-size:12px;color:var(--text-dim);line-height:1.5;}
+.step-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.step-tag{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:0.2px;}
+.step-tag-auto{background:rgba(57,210,192,0.1);color:var(--cyan);border:1px solid rgba(57,210,192,0.2);}
+.step-tag-human{background:rgba(248,81,73,0.1);color:var(--red);border:1px solid rgba(248,81,73,0.2);}
+.step-tag-ai{background:rgba(188,140,255,0.1);color:var(--purple);border:1px solid rgba(188,140,255,0.2);}
+.step-tag-gate{background:rgba(210,153,34,0.1);color:var(--orange);border:1px solid rgba(210,153,34,0.2);}
+.step-tag-data{background:rgba(88,166,255,0.1);color:var(--accent);border:1px solid rgba(88,166,255,0.2);}
+.step-tag-reg{background:rgba(248,81,73,0.08);color:var(--red);border:1px solid rgba(248,81,73,0.15);}
+
+/* Substep connector */
+.step-connector{position:absolute;left:30px;top:46px;bottom:-12px;width:1px;background:var(--border);display:none;}
+.step:not(:last-child) .step-connector{display:block;}
+
+/* Actors row */
+.actors{display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.04);flex-wrap:wrap;}
+.actor{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-dim);padding:2px 8px;background:rgba(255,255,255,0.03);border-radius:12px;}
+.actor-dot{width:6px;height:6px;border-radius:50%;}
+
+/* Duration/cost badges in header */
+.stage-badge{padding:4px 10px;border-radius:6px;font-size:11px;background:rgba(255,255,255,0.04);color:var(--text-dim);white-space:nowrap;}
+
+/* Feedback loop overlay */
+.feedback-loop{margin:0 28px 0;padding:14px 20px;background:var(--bg2);border:1px dashed var(--orange);border-radius:10px;display:flex;align-items:center;gap:14px;position:relative;}
+.feedback-loop::before{content:'';position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:8px solid var(--orange);}
+.feedback-icon{width:36px;height:36px;border-radius:10px;background:var(--orange-dim);color:var(--orange);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.feedback-text{font-size:12px;color:var(--text-dim);line-height:1.5;}
+.feedback-text strong{color:var(--orange);}
+
+/* Summary footer */
+.summary{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-top:32px;}
+.summary h3{font-size:15px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.summary-stat{text-align:center;padding:16px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid var(--border);}
+.summary-val{font-size:28px;font-weight:700;margin-bottom:4px;}
+.summary-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;}
+
+@media(max-width:768px){
+  .summary-grid{grid-template-columns:1fr 1fr;}
+  .stage-meta{display:none;}
+  .legend-bar{flex-wrap:wrap;gap:10px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Citi Content Marketing <span>/ Workflow Builder</span></h1>
+    <span class="chip chip-blue">8 Stages</span>
+    <span class="chip chip-orange">Stage 7 NEW</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="chip chip-green">FINRA</span>
+    <span class="chip chip-green">SEC</span>
+    <span class="chip chip-green">CFPB</span>
+  </div>
+</div>
+
+<div class="legend-bar">
+  <span style="font-weight:600;color:var(--text);">Legend:</span>
+  <div class="legend-item"><span class="step-tag step-tag-human" style="font-size:10px;">HUMAN</span> Human-in-the-loop checkpoint</div>
+  <div class="legend-item"><span class="step-tag step-tag-ai" style="font-size:10px;">AI</span> AI-assisted / automated</div>
+  <div class="legend-item"><span class="step-tag step-tag-gate" style="font-size:10px;">GATE</span> Approval gate — blocks pipeline</div>
+  <div class="legend-item"><span class="step-tag step-tag-reg" style="font-size:10px;">REGULATORY</span> Compliance / legal required</div>
+  <div class="legend-item"><span class="step-tag step-tag-data" style="font-size:10px;">DATA</span> Data / analytics step</div>
+</div>
+
+<div class="canvas" id="canvas"></div>
+
+<script>
+const stages = [
+  {
+    num: 1, title: "Strategy & Briefing", subtitle: "Align content to business priorities and past performance data",
+    color: "#58a6ff", duration: "2-5 days", isNew: false,
+    steps: [
+      { icon: "&#128203;", iconBg: "var(--blue-dim)", iconColor: "var(--accent)", title: "Define campaign objectives", desc: "Set KPIs aligned to business line (Wealth AUM growth, card acquisitions, deposit growth). Objectives flow from quarterly business reviews.", tags: ["human"] },
+      { icon: "&#128202;", iconBg: "var(--purple-dim)", iconColor: "var(--purple)", title: "Pull Stage 7 insights", desc: "Ad Analyzer feeds back: top-performing hooks, best compliance-cost ratios, winning creative templates, audience segments with highest conversion.", tags: ["data","ai"], isNew: true },
+      { icon: "&#128221;", iconBg: "var(--blue-dim)", iconColor: "var(--accent)", title: "Draft creative brief", desc: "Content strategist writes brief covering audience, messaging framework, channels, format mix, and budget. References pre-approved templates where applicable.", tags: ["human"] },
+      { icon: "&#9745;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Business line head approval", desc: "Brief must be signed off before any creative work begins. Ensures alignment with product strategy, pricing, and regulatory posture.", tags: ["gate","human"] },
+    ],
+    actors: [
+      { name: "Content Strategist", color: "var(--accent)" },
+      { name: "Business Line Head", color: "var(--orange)" },
+      { name: "Campaign Manager", color: "var(--green)" },
+    ]
+  },
+  {
+    num: 2, title: "Creation (AI-Assisted)", subtitle: "Draft content with Citi Stylus + human oversight",
+    color: "#bc8cff", duration: "3-7 days", isNew: false,
+    steps: [
+      { icon: "&#129302;", iconBg: "var(--purple-dim)", iconColor: "var(--purple)", title: "AI draft generation via Citi Stylus", desc: "Citi Stylus Workspaces generate initial copy, scripts, visual concepts, and variants. Over 6.5M prompts logged internally. Drafts use pre-approved templates when available.", tags: ["ai"] },
+      { icon: "&#127912;", iconBg: "var(--blue-dim)", iconColor: "var(--accent)", title: "Creative Director review", desc: "All AI output is reviewed by a human creative director for brand voice, messaging accuracy, emotional tone, and creative quality. Nothing proceeds without human sign-off.", tags: ["human","gate"] },
+      { icon: "&#128260;", iconBg: "var(--cyan-dim)", iconColor: "var(--cyan)", title: "A/B variant creation", desc: "Multiple creative variants produced: different hooks, CTAs, imagery, formats. Each variant tagged with creative properties for downstream analysis.", tags: ["ai","human"] },
+      { icon: "&#128196;", iconBg: "var(--blue-dim)", iconColor: "var(--accent)", title: "Asset packaging", desc: "Final creative packaged with metadata: product line, target segment, hook type, messaging framework, disclosure requirements, channel specs.", tags: ["auto"] },
+    ],
+    actors: [
+      { name: "Copywriters", color: "var(--purple)" },
+      { name: "Creative Director", color: "var(--accent)" },
+      { name: "AI (Citi Stylus)", color: "var(--cyan)" },
+      { name: "Designers", color: "var(--pink)" },
+    ]
+  },
+  {
+    num: 3, title: "Compliance & Legal Review", subtitle: "Multi-regulator review: CFPB, SEC, OCC, FTC, FINRA",
+    color: "#f85149", duration: "1-9 days", isNew: false,
+    steps: [
+      { icon: "&#129302;", iconBg: "var(--purple-dim)", iconColor: "var(--purple)", title: "AI pre-scan for violations", desc: "Automated compliance scanner flags: missing disclosures, promissory language, unbalanced risk statements, UDAAP violations, rate claims without dates, testimonial issues.", tags: ["ai","reg"] },
+      { icon: "&#128270;", iconBg: "var(--red-dim)", iconColor: "var(--red)", title: "Risk rating at inception", desc: "Campaigns risk-rated: LOW (pre-approved template, no claims) / MEDIUM (modified template, general claims) / HIGH (new creative, rate/return claims, testimonials).", tags: ["human","reg"] },
+      { icon: "&#128101;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Cross-functional compliance meeting", desc: "Marketing, compliance, and legal discuss flagged items. Higher-risk campaigns get additional scrutiny and sign-offs from senior compliance officers.", tags: ["human","reg"] },
+      { icon: "&#128221;", iconBg: "var(--red-dim)", iconColor: "var(--red)", title: "Manual compliance sign-off", desc: "Compliance officer performs final manual review against regulatory checklists: CFPB (UDAAP), SEC (17a-3), FINRA (2210), FTC, OCC. Every asset must be individually approved.", tags: ["gate","human","reg"] },
+      { icon: "&#128260;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Revision cycle (if needed)", desc: "Flagged items return to Stage 2 for revision. Each cycle adds 1-3 days. Pre-approved templates average 0.3 cycles; new high-risk creative averages 2.4 cycles.", tags: ["human"] },
+    ],
+    actors: [
+      { name: "Compliance Officers", color: "var(--red)" },
+      { name: "Legal Counsel", color: "var(--orange)" },
+      { name: "AI Compliance Scanner", color: "var(--purple)" },
+    ]
+  },
+  {
+    num: 4, title: "Stakeholder & Executive Sign-off", subtitle: "Final approval gate before production",
+    color: "#d29922", duration: "1-3 days", isNew: false,
+    steps: [
+      { icon: "&#128193;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Campaign package assembly", desc: "All approved creative, compliance sign-offs, legal opinions, and risk ratings compiled into a campaign review package for executive review.", tags: ["auto"] },
+      { icon: "&#128101;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Executive review meeting", desc: "CMO, business line heads, legal, and compliance review the full campaign. Context: a single non-compliant ad can result in millions in fines (M1 Finance: $850K FINRA fine).", tags: ["human","gate"] },
+      { icon: "&#9989;", iconBg: "var(--green-dim)", iconColor: "var(--green)", title: "Final go / no-go decision", desc: "Binary gate: approved for production or returned with feedback. No partial approvals — entire campaign clears or doesn't.", tags: ["gate","human"] },
+    ],
+    actors: [
+      { name: "CMO / Marketing Leadership", color: "var(--orange)" },
+      { name: "Business Line Heads", color: "var(--accent)" },
+      { name: "Legal", color: "var(--red)" },
+    ]
+  },
+  {
+    num: 5, title: "Localization & Channel Adaptation", subtitle: "160+ countries, each with own regulatory requirements",
+    color: "#39d2c0", duration: "3-10 days", isNew: false,
+    steps: [
+      { icon: "&#127760;", iconBg: "var(--cyan-dim)", iconColor: "var(--cyan)", title: "Market selection & regulatory mapping", desc: "Identify target markets. Map each to local regulatory requirements: EU MiFID II, UK FCA, Singapore MAS, Hong Kong SFC, etc. Each jurisdiction may modify disclosures.", tags: ["human","reg"] },
+      { icon: "&#128483;", iconBg: "var(--blue-dim)", iconColor: "var(--accent)", title: "Translation & cultural adaptation", desc: "Translation memory + human translators adapt copy. Cultural review ensures messaging resonates locally. AI assists with initial translation, humans validate nuance.", tags: ["ai","human"] },
+      { icon: "&#128241;", iconBg: "var(--cyan-dim)", iconColor: "var(--cyan)", title: "Channel format adaptation", desc: "Creative resized and reformatted for each channel: Meta (1:1, 9:16, 4:5), Google Display (responsive), YouTube (16:9), LinkedIn, email, in-app. Character limits applied.", tags: ["auto","human"] },
+      { icon: "&#128737;", iconBg: "var(--red-dim)", iconColor: "var(--red)", title: "Regional compliance review", desc: "Each localized variant goes through regional compliance review. Disclosures verified per local regulation. This can multiply the Stage 3 workload significantly.", tags: ["gate","human","reg"] },
+    ],
+    actors: [
+      { name: "Localization Teams", color: "var(--cyan)" },
+      { name: "Regional Compliance", color: "var(--red)" },
+      { name: "Channel Managers", color: "var(--accent)" },
+    ]
+  },
+  {
+    num: 6, title: "Distribution, Personalization & Performance", subtitle: "Cross-channel delivery with compliant personalization",
+    color: "#3fb950", duration: "Ongoing", isNew: false,
+    steps: [
+      { icon: "&#127919;", iconBg: "var(--green-dim)", iconColor: "var(--green)", title: "Audience segmentation & targeting", desc: "CDP segments activated across channels. Note: Meta Financial Services ad category locks targeting to 18-65+ / all genders. Personalization rules must be pre-approved.", tags: ["ai","reg"] },
+      { icon: "&#128640;", iconBg: "var(--green-dim)", iconColor: "var(--green)", title: "Campaign launch across channels", desc: "Paid media (Meta, Google, YouTube, LinkedIn, programmatic DSPs), owned (email, app, web), and earned. Budget allocated per channel based on Stage 7 historical data.", tags: ["auto"] },
+      { icon: "&#128295;", iconBg: "var(--purple-dim)", iconColor: "var(--purple)", title: "Dynamic personalization engine", desc: "Real-time content personalization within pre-approved template boundaries. Every variant and segment-specific message must remain within compliance guardrails.", tags: ["ai","reg"] },
+      { icon: "&#128200;", iconBg: "var(--blue-dim)", iconColor: "var(--accent)", title: "Real-time performance monitoring", desc: "Live dashboards track CTR, conversion, CPA, ROAS by creative variant, channel, and segment. Anomaly detection alerts for sudden performance drops or compliance flags.", tags: ["data","auto"] },
+      { icon: "&#9888;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Creative fatigue detection", desc: "Automated monitoring for engagement decay. When a creative drops below threshold, it's flagged for refresh or retirement. Average creative lifespan: 18 days.", tags: ["ai","data"] },
+    ],
+    actors: [
+      { name: "Performance Marketing", color: "var(--green)" },
+      { name: "Martech / Ops", color: "var(--cyan)" },
+      { name: "Data & Analytics", color: "var(--accent)" },
+    ]
+  },
+  {
+    num: 7, title: "Ad Analysis & Optimization", subtitle: "Creative intelligence engine — the feedback loop",
+    color: "#d29922", duration: "Continuous", isNew: true,
+    steps: [
+      { icon: "&#128065;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Creative property decomposition", desc: "Every ad broken into analyzable properties: visual elements, color palette, text overlay ratio, imagery type (lifestyle vs data viz), face presence, thumbnail composition.", tags: ["ai","data"], substeps: ["Visual element classification", "Color palette extraction", "Text overlay ratio measurement", "Thumbnail composition scoring"] },
+      { icon: "&#9889;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Hook pattern analysis", desc: "First 3 seconds (video) / first line (static) classified: Question, Statistic, Pain Point, Authority, Social Proof, Storytelling. Each pattern scored against historical CTR and compliance pass rate.", tags: ["ai","data"], substeps: ["Hook type classification", "Retention curve analysis", "Compliance pass rate by hook type", "Pre-approval status mapping"] },
+      { icon: "&#128221;", iconBg: "var(--purple-dim)", iconColor: "var(--purple)", title: "Script & copy analysis", desc: "Messaging framework classification (PAS, Before/After, Social Proof). Tone scoring against brand voice. Readability analysis (Flesch-Kincaid). Disclosure placement impact on engagement.", tags: ["ai","data"], substeps: ["Framework classification", "Tone & voice scoring", "Readability (Flesch-Kincaid)", "Persuasion pattern detection", "Disclosure placement analysis"] },
+      { icon: "&#128200;", iconBg: "var(--green-dim)", iconColor: "var(--green)", title: "Performance scoring & prediction", desc: "Connect creative properties to business outcomes. CTR, conversion, ROAS by creative element. Predictive scoring for new concepts before they enter compliance pipeline.", tags: ["ai","data"], substeps: ["Engagement scoring by creative property", "Conversion attribution", "Predictive pre-flight scoring", "Creative fatigue forecasting"] },
+      { icon: "&#128176;", iconBg: "var(--red-dim)", iconColor: "var(--red)", title: "Compliance cost ratio calculation", desc: "Unique metric for regulated industries: performance per dollar of compliance review cost. A moderate performer approved on first pass may beat a high performer that required 4 revision cycles.", tags: ["data","reg"], substeps: ["Review cycle cost tracking", "Cost-per-approved-asset", "Template efficiency scoring"] },
+      { icon: "&#128736;", iconBg: "var(--cyan-dim)", iconColor: "var(--cyan)", title: "Pre-approved template identification", desc: "Identify winning combinations of hook + format + framework + disclosure placement that are both compliance-approved AND high-performing. These templates get fast-tracked in future cycles.", tags: ["ai","human","reg"], substeps: ["Pattern matching across top performers", "Compliance boundary validation", "Template certification"] },
+      { icon: "&#128101;", iconBg: "var(--red-dim)", iconColor: "var(--red)", title: "Human insight validation", desc: "Creative strategist reviews AI-generated insights. Correlation ≠ causation — a human validates that creative patterns' performance is attributable to the creative, not external factors.", tags: ["gate","human"] },
+      { icon: "&#128257;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Feed insights back to Stage 1", desc: "Validated insights flow into next cycle's briefs: winning hooks, optimal formats, channel allocation data, kill signals for underperforming patterns, and pre-approved template library.", tags: ["data"], isNew: true },
+    ],
+    actors: [
+      { name: "Creative Strategist", color: "var(--orange)" },
+      { name: "Data Analysts", color: "var(--accent)" },
+      { name: "Compliance Officer", color: "var(--red)" },
+      { name: "AI Scoring Engine", color: "var(--purple)" },
+    ]
+  },
+  {
+    num: 8, title: "Archiving & Audit Trail", subtitle: "Regulatory retention: SEC 5yr, FINRA 3yr, default 6yr",
+    color: "#7d8590", duration: "Permanent", isNew: false,
+    steps: [
+      { icon: "&#128451;", iconBg: "rgba(125,133,144,0.15)", iconColor: "var(--text-dim)", title: "Auto-archive all published content", desc: "Every piece of content (display ads, social posts, emails, video, in-app, text messages) archived with full metadata: approval chain, compliance sign-offs, creative properties, performance data.", tags: ["auto","reg"] },
+      { icon: "&#128203;", iconBg: "rgba(125,133,144,0.15)", iconColor: "var(--text-dim)", title: "Approval chain documentation", desc: "Complete audit trail: who created, who reviewed, who approved, when, what changes were made. This is the record a regulator asks for during examination.", tags: ["auto","reg"] },
+      { icon: "&#128202;", iconBg: "var(--blue-dim)", iconColor: "var(--accent)", title: "Archive Stage 7 analytics", desc: "Ad Analyzer outputs (scores, predictions, template designations, cost ratios) become part of the permanent record. Creates documented rationale for creative decisions.", tags: ["data","reg"], isNew: true },
+      { icon: "&#128270;", iconBg: "var(--orange-dim)", iconColor: "var(--orange)", title: "Periodic audit readiness review", desc: "Quarterly review of archive completeness. Verify all formats are captured, retention periods are met (SEC: 5yr, FINRA: 3yr, default: 6yr), and records are accessible within required timeframes.", tags: ["human","reg","gate"] },
+    ],
+    actors: [
+      { name: "Marketing Ops", color: "var(--text-dim)" },
+      { name: "Records Management", color: "var(--accent)" },
+      { name: "Compliance", color: "var(--red)" },
+      { name: "IT / Martech", color: "var(--cyan)" },
+    ]
+  }
+];
+
+function renderTagHTML(tag) {
+  const map = {
+    human: ['HUMAN', 'step-tag-human'],
+    ai: ['AI', 'step-tag-ai'],
+    gate: ['GATE', 'step-tag-gate'],
+    auto: ['AUTO', 'step-tag-auto'],
+    data: ['DATA', 'step-tag-data'],
+    reg: ['REGULATORY', 'step-tag-reg'],
+  };
+  const [label, cls] = map[tag] || [tag, ''];
+  return `<span class="step-tag ${cls}">${label}</span>`;
+}
+
+function renderStage(stage) {
+  const numBg = stage.isNew ? 'var(--orange-dim)' : `${stage.color}22`;
+  const numColor = stage.isNew ? 'var(--orange)' : stage.color;
+
+  let stepsHTML = stage.steps.map((step, i) => {
+    let substepsHTML = '';
+    if (step.substeps) {
+      substepsHTML = `<div style="margin-top:8px;padding-left:4px;">${step.substeps.map(ss =>
+        `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px;color:var(--text-dim);">
+          <span style="color:${numColor};">&#8627;</span> ${ss}
+        </div>`
+      ).join('')}</div>`;
+    }
+    const newBadge = step.isNew ? `<span class="chip chip-orange" style="font-size:9px;padding:1px 6px;">NEW</span>` : '';
+
+    return `<div class="step">
+      <div class="step-icon" style="background:${step.iconBg};color:${step.iconColor}">${step.icon}</div>
+      <div class="step-content">
+        <div class="step-title">${step.title} ${newBadge}</div>
+        <div class="step-desc">${step.desc}</div>
+        ${substepsHTML}
+        <div class="step-tags">${step.tags.map(renderTagHTML).join('')}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const actorsHTML = stage.actors.map(a =>
+    `<span class="actor"><span class="actor-dot" style="background:${a.color}"></span>${a.name}</span>`
+  ).join('');
+
+  const newClass = stage.isNew ? ' new-stage' : '';
+  const newChip = stage.isNew ? `<span class="chip chip-orange" style="margin-left:6px;">NEW — AD ANALYZER</span>` : '';
+
+  return `
+    <div class="stage">
+      <div class="stage-card${newClass}" data-stage="${stage.num}" onclick="toggleStage(${stage.num})">
+        <div class="stage-header">
+          <div class="stage-header-left">
+            <div class="stage-num" style="background:${numBg};color:${numColor}">${stage.num}</div>
+            <div class="stage-info">
+              <div class="stage-title">${stage.title}${newChip}</div>
+              <div class="stage-subtitle">${stage.subtitle}</div>
+            </div>
+          </div>
+          <div class="stage-header-right">
+            <div class="stage-meta">
+              <span class="stage-badge">&#9201; ${stage.duration}</span>
+              <span class="stage-badge">${stage.steps.length} steps</span>
+            </div>
+            <div class="expand-icon">&#9660;</div>
+          </div>
+        </div>
+        <div class="steps-panel">
+          <div class="steps-inner">
+            ${stepsHTML}
+            <div class="actors">${actorsHTML}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${stage.num < 8 ? `<div class="connector${stage.num === 7 ? ' feedback' : ''}"><div class="connector-line"></div></div>` : ''}
+    ${stage.num === 7 ? `
+      <div class="feedback-loop">
+        <div class="feedback-icon">&#128257;</div>
+        <div class="feedback-text"><strong>Feedback Loop:</strong> Stage 7 insights feed directly back to Stage 1. Next cycle's creative briefs reference winning hooks (Question: 2.9% CTR, 92% compliance pass), pre-approved templates (94% faster compliance), optimal channel mix, and kill signals for underperforming patterns. This transforms the pipeline from linear production to an intelligent, self-improving system.</div>
+      </div>
+      <div class="connector"><div class="connector-line"></div></div>
+    ` : ''}
+  `;
+}
+
+function toggleStage(num) {
+  const card = document.querySelector(`.stage-card[data-stage="${num}"]`);
+  card.classList.toggle('expanded');
+}
+
+// Render all stages
+document.getElementById('canvas').innerHTML = stages.map(renderStage).join('') + `
+  <div class="summary">
+    <h3>&#128202; Pipeline Summary</h3>
+    <div class="summary-grid">
+      <div class="summary-stat">
+        <div class="summary-val" style="color:var(--accent)">8</div>
+        <div class="summary-label">Total Stages</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-val" style="color:var(--green)">37</div>
+        <div class="summary-label">Total Steps</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-val" style="color:var(--red)">14</div>
+        <div class="summary-label">Human Checkpoints</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-val" style="color:var(--purple)">12</div>
+        <div class="summary-label">AI-Assisted Steps</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:14px;background:rgba(210,153,34,0.06);border:1px solid rgba(210,153,34,0.15);border-radius:8px;font-size:12px;color:var(--text-dim);line-height:1.6;">
+      <strong style="color:var(--orange);">Why this matters:</strong> Every piece of content passes through ~37 discrete steps involving ~14 human decision points. This is why marketing ops at a bank like Citi can represent 25-35% of total marketing headcount — the operational infrastructure required to run compliant, personalized, global marketing at this scale is enormous. The Ad Analyzer (Stage 7) adds 8 steps but ultimately <em>reduces</em> total pipeline cost by identifying pre-approved templates that cut compliance cycles by up to 94%.
+    </div>
+  </div>
+`;
+
+// Auto-expand Stage 7 on load
+setTimeout(() => toggleStage(7), 600);
+</script>
+</body>
+</html>
